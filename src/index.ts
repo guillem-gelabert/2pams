@@ -10,7 +10,7 @@ const PORT = process.env['PORT'] || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/', async (req: Request, res: Response) => {
+app.get('/*', async (req: Request, res: Response) => {
   const headers = {
     'User-Agent':
       'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm) Chrome/80.0.345.0 Safari/537.36',
