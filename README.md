@@ -20,6 +20,7 @@ npm install
 ## 🛠️ Development
 
 ### Start development server
+
 ```bash
 npm run dev
 ```
@@ -27,11 +28,13 @@ npm run dev
 The server will start on `http://localhost:3000` with auto-restart on file changes.
 
 ### Build for production
+
 ```bash
 npm run build
 ```
 
 ### Start production server
+
 ```bash
 npm start
 ```
@@ -39,38 +42,27 @@ npm start
 ## 🔧 Code Quality
 
 ### Lint code
+
 ```bash
 npm run lint
 ```
 
 ### Fix linting issues automatically
+
 ```bash
 npm run lint:fix
 ```
 
 ### Format code with Prettier
+
 ```bash
 npm run format
 ```
 
 ### Check code formatting
+
 ```bash
 npm run format:check
-```
-
-## 📁 Project Structure
-
-```
-2pams/
-├── src/
-│   └── index.ts          # Main application entry point
-├── dist/                 # Compiled JavaScript (generated)
-├── package.json          # Dependencies and scripts
-├── tsconfig.json         # TypeScript configuration
-├── .eslintrc.js          # ESLint configuration
-├── .prettierrc           # Prettier configuration
-├── nodemon.json          # Nodemon configuration
-└── README.md             # This file
 ```
 
 ## 🌐 API Endpoints
@@ -98,15 +90,15 @@ This project uses a comprehensive ESLint setup with:
 
 ## 🔄 Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start development server with hot reload |
-| `npm run build` | Compile TypeScript to JavaScript |
-| `npm start` | Start production server |
-| `npm run lint` | Check code with ESLint |
-| `npm run lint:fix` | Fix ESLint issues automatically |
-| `npm run format` | Format code with Prettier |
-| `npm run format:check` | Check code formatting |
+| Script                 | Description                              |
+| ---------------------- | ---------------------------------------- |
+| `npm run dev`          | Start development server with hot reload |
+| `npm run build`        | Compile TypeScript to JavaScript         |
+| `npm start`            | Start production server                  |
+| `npm run lint`         | Check code with ESLint                   |
+| `npm run lint:fix`     | Fix ESLint issues automatically          |
+| `npm run format`       | Format code with Prettier                |
+| `npm run format:check` | Check code formatting                    |
 
 ## 🚀 Getting Started
 
@@ -144,4 +136,4 @@ NODE_ENV=development
 
 ## 📄 License
 
-ISC 
+ISC
