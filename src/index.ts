@@ -1,7 +1,5 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
-import basex from 'base-x';
-
 // Load environment variables
 dotenv.config();
 
@@ -12,39 +10,25 @@ const PORT = process.env['PORT'] || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const db: Array<string> = [];
+app.get('/', async (req: Request, res: Response) => {
+  const headers = {
+    'User-Agent':
+      'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm) Chrome/80.0.345.0 Safari/537.36',
+  };
 
-const base62 = basex(
-  '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-);
-
-// Basic route
-app.get('/:shortUrl', (req: Request, res: Response) => {
-  const shortUrl = req.params['shortUrl'];
-  if (typeof shortUrl === 'string') {
-    const index = base62.decode(shortUrl);
-    const key = new TextDecoder().decode(index);
-
-    const url = db[parseInt(key)];
-    if (url) {
-      res.redirect(301, url);
-    }
-  }
-});
-
-// URL Shortener endpoint
-app.get('/shorten/*', (req: Request, res: Response) => {
   const url = req.params[0];
 
   if (!url) {
-    return res.status(400).json({ error: 'URL is required' });
+    return res.sendStatus(404);
   }
 
-  db.push(url);
-  const shortUrl = base62.encode(
-    new TextEncoder().encode((db.length - 1).toString())
-  );
-  return res.status(200).send(shortUrl);
+  const site = await fetch(url, {
+    headers,
+  });
+
+  const body = await site.text();
+
+  return res.send(body);
 });
 
 // Health check endpoint
