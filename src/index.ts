@@ -24,13 +24,17 @@ app.get('/:shortUrl', (req: Request, res: Response) => {
   if (typeof shortUrl === 'string') {
     const index = base62.decode(shortUrl);
     const key = new TextDecoder().decode(index);
-    res.send(db[parseInt(key)]);
+
+    const url = db[parseInt(key)];
+    if (url) {
+      res.redirect(301, url);
+    }
   }
 });
 
 // URL Shortener endpoint
-app.get('/shorten/:url', (req: Request, res: Response) => {
-  const { url } = req.params;
+app.get('/shorten/*', (req: Request, res: Response) => {
+  const url = req.params[0];
 
   if (!url) {
     return res.status(400).json({ error: 'URL is required' });
