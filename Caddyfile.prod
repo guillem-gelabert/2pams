@@ -1,5 +1,5 @@
 2pa.ms {
-    reverse_proxy localhost:3000
+    respond "Hello World"
     log {
          output file /var/log/caddy/access.log
          format json
