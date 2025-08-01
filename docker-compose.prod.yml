@@ -20,6 +20,9 @@ services:
       - caddy_data:/data
       - caddy_config:/config
       - ./logs:/var/log/caddy
+    environment:
+      - DOMAIN=${DOMAIN}
+      - PORT=${PORT}
     depends_on:
       - app
     restart: unless-stopped
