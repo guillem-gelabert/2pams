@@ -3,6 +3,8 @@
 # Local development with TLS
 {$DOMAIN:localhost} {
     reverse_proxy app:{$PORT:3000}
-    log
-    tls internal
+    log {
+         output file /var/log/caddy/access.log
+         format json
+    }
 }
