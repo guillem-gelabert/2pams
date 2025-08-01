@@ -1,7 +1,8 @@
-2pa.ms {
-    respond "Hello World"
-    log {
-         output file /var/log/caddy/access.log
-         format json
-    }
+# Simple Caddyfile for 2pams Express.js app
+
+# Local development with TLS
+{$DOMAIN:localhost} {
+    reverse_proxy app:{$PORT:3000}
+    log
+    tls internal
 }

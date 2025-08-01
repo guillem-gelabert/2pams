@@ -4,13 +4,11 @@ services:
   app:
     build: .
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - PORT=3000
-    command: npm run build && npm start
     restart: unless-stopped
     networks:
       - app-network
-    # No ports exposed - only accessible through Caddy
 
   caddy:
     image: caddy:2-alpine
