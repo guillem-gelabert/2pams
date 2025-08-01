@@ -15,14 +15,21 @@ const highlightConfig = {
   serviceVersion: 'git-sha',
 };
 
-if (process.env['NODE_ENV'] === 'production') {
-  H.init(highlightConfig);
-}
+H.init(highlightConfig);
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(Handlers.middleware(highlightConfig));
+
+// Health check endpoint
+app.get('/health', (_req: Request, res: Response) => {
+  res.json({
+    status: 'OK',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
 
 app.get('/http*', async (req: Request, res: Response) => {
   H.log('http', 'test');
@@ -45,15 +52,6 @@ app.get('/http*', async (req: Request, res: Response) => {
   const body = await site.text();
 
   return res.send(body);
-});
-
-// Health check endpoint
-app.get('/health', (_req: Request, res: Response) => {
-  res.json({
-    status: 'OK',
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-  });
 });
 
 app.use(Handlers.errorHandler(highlightConfig));
