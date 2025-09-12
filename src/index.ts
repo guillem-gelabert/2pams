@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import { H, Handlers } from '@highlight-run/node';
+import { parse } from 'node-html-parser';
 
 // Load environment variables
 dotenv.config();
@@ -51,7 +52,13 @@ app.get('/http*', async (req: Request, res: Response) => {
 
   const body = await site.text();
 
-  return res.send(body);
+  const root = parse(body);
+
+  root.querySelectorAll('link[rel="stylesheet"]').forEach(stylesheet => {
+    stylesheet.setAttribute('href', `${url}${stylesheet.getAttribute('href')}`);
+  });
+
+  return res.send(root.toString());
 });
 
 app.use(Handlers.errorHandler(highlightConfig));
