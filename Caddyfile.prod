@@ -8,3 +8,11 @@
          format json
     }
 }
+
+dashboard.{$DOMAIN} {
+    # basic_auth / {
+    #     {$DASHBOARD_USER} {$DASHBOARD_PASSWORD}
+    # }
+
+    respond "2pams dashboard"
+}

@@ -1,7 +1,23 @@
 # Simple Caddyfile for 2pams Express.js app
 
 # Local development with TLS
-localhost {
+2pams.local {
     reverse_proxy localhost:3000
     tls internal
+    
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+}
+
+dashboard.2pams.local {
+    basic_auth {
+        {$DASHBOARD_USER} {$DASHBOARD_PASSWORD}
+    }
+
+    file_server / {
+        root /app/public
+    }
+    
 }
