@@ -40,13 +40,14 @@ app.get('/http*', async (req: Request, res: Response) => {
       'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm) Chrome/80.0.345.0 Safari/537.36',
   };
 
-  const url = `http${req.params[0]}`;
-
-  if (!url) {
+  let url: URL;
+  try {
+    url = new URL(`http${req.params[0]}`);
+  } catch (e) {
     return res.sendStatus(404);
   }
 
-  const site = await fetch(url, {
+  const site = await fetch(url.href, {
     headers,
   });
 
@@ -55,7 +56,10 @@ app.get('/http*', async (req: Request, res: Response) => {
   const root = parse(body);
 
   root.querySelectorAll('link[rel="stylesheet"]').forEach(stylesheet => {
-    stylesheet.setAttribute('href', `${url}${stylesheet.getAttribute('href')}`);
+    stylesheet.setAttribute(
+      'href',
+      `${url.origin}${stylesheet.getAttribute('href')}`
+    );
   });
 
   return res.send(root.toString());
