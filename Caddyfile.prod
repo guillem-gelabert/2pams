@@ -1,6 +1,5 @@
 # Simple Caddyfile for 2pams Express.js app
 
-# Local development with TLS
 {$DOMAIN:localhost} {
     reverse_proxy app:{$PORT:3000}
     log {
@@ -10,9 +9,9 @@
 }
 
 dashboard.{$DOMAIN} {
-    # basic_auth / {
-    #     {$DASHBOARD_USER} {$DASHBOARD_PASSWORD}
-    # }
+    basic_auth / {
+        {$DASHBOARD_USER} {$DASHBOARD_PASSWORD}
+    }
 
     respond "2pams dashboard"
 }
