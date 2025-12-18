@@ -2,6 +2,10 @@ FROM node:24-alpine
 
 WORKDIR /app
 
+# Build argument for deployment timestamp
+ARG DEPLOYMENT_TIMESTAMP
+ENV DEPLOYMENT_TIMESTAMP=${DEPLOYMENT_TIMESTAMP}
+
 # Copy package files
 COPY package*.json ./
 

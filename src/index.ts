@@ -9,6 +9,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env['PORT'] || 3000;
 
+// Deployment timestamp: use env var if set during deployment, otherwise use server start time
+const DEPLOYMENT_TIMESTAMP =
+  process.env['DEPLOYMENT_TIMESTAMP'] || new Date().toISOString();
+
 const highlightConfig = {
   projectID: 'jdk55qvd',
   serviceName: '2pa.ms',
@@ -61,6 +65,16 @@ app.get('/http*', async (req: Request, res: Response) => {
       `${url.origin}${stylesheet.getAttribute('href')}`
     );
   });
+
+  // Inject deployment timestamp meta tag
+  const head = root.querySelector('head');
+  if (head) {
+    const metaTagHtml = `<meta name="deployment-timestamp" content="${DEPLOYMENT_TIMESTAMP}">`;
+    const metaTag = parse(metaTagHtml).querySelector('meta');
+    if (metaTag) {
+      head.appendChild(metaTag);
+    }
+  }
 
   return res.send(root.toString());
 });

@@ -127,6 +127,98 @@ PORT=3000
 NODE_ENV=development
 ```
 
+## 🚀 Deployment
+
+### Docker Build
+
+Build the Docker image:
+
+```bash
+docker build -t 2pams:latest .
+```
+
+To set a custom deployment timestamp:
+
+```bash
+docker build --build-arg DEPLOYMENT_TIMESTAMP="2025-01-15T10:30:00Z" -t 2pams:latest .
+```
+
+### Docker Run
+
+Run the container:
+
+```bash
+docker run -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e PORT=3000 \
+  2pams:latest
+```
+
+### Docker Compose
+
+#### Development
+
+Start the development environment with hot reload:
+
+```bash
+docker-compose -f docker-compose.dev.yml up
+```
+
+#### Production
+
+Set required environment variables and start:
+
+```bash
+export DOMAIN=your-domain.com
+export PORT=3000
+export DEPLOYMENT_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)  # Optional: set custom timestamp
+
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+The `DEPLOYMENT_TIMESTAMP` environment variable is optional. If not set, the server will use its start time as the deployment timestamp.
+
+### CI/CD Deployment
+
+The project includes GitHub Actions workflows for automated deployment:
+
+#### Automatic Deployment
+
+- **Push to `main` branch**: Automatically builds and pushes Docker image to GitHub Container Registry
+- **Tagged releases** (e.g., `v1.0.0`): Creates versioned images
+- **Pull requests**: Builds images for testing (does not push)
+
+The deployment timestamp is automatically set during CI/CD:
+
+- Uses commit timestamp for push events
+- Falls back to build start time for other events
+
+#### Manual Deployment
+
+Images are available at: `ghcr.io/<your-org>/2pams:<tag>`
+
+Pull and run:
+
+```bash
+docker pull ghcr.io/<your-org>/2pams:latest
+docker run -p 3000:3000 ghcr.io/<your-org>/2pams:latest
+```
+
+### Deployment Timestamp
+
+The application includes a meta tag with the deployment timestamp in all served pages:
+
+```html
+<meta name="deployment-timestamp" content="2025-01-15T10:30:00Z" />
+```
+
+This timestamp is set:
+
+- **CI/CD**: Automatically from commit/build time
+- **Docker build**: Via `DEPLOYMENT_TIMESTAMP` build arg
+- **Docker Compose**: Via `DEPLOYMENT_TIMESTAMP` environment variable
+- **Default**: Server start time if not specified
+
 ## 🤝 Contributing
 
 1. Follow the linting rules: `npm run lint`

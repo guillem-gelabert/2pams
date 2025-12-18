@@ -2,10 +2,14 @@ version: '3.8'
 
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        DEPLOYMENT_TIMESTAMP: ${DEPLOYMENT_TIMESTAMP:-}
     environment:
       - NODE_ENV=development
       - PORT=3000
+      - DEPLOYMENT_TIMESTAMP=${DEPLOYMENT_TIMESTAMP:-}
     restart: unless-stopped
     networks:
       - app-network
