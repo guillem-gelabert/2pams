@@ -180,18 +180,31 @@ The `DEPLOYMENT_TIMESTAMP` environment variable is optional. If not set, the ser
 
 ### CI/CD Deployment
 
-The project includes GitHub Actions workflows for automated deployment:
+The project includes GitHub Actions workflows for automated build and deployment:
 
 #### Automatic Deployment
 
-- **Push to `main` branch**: Automatically builds and pushes Docker image to GitHub Container Registry
-- **Tagged releases** (e.g., `v1.0.0`): Creates versioned images
-- **Pull requests**: Builds images for testing (does not push)
+- **Push to `main` branch**: Automatically builds, pushes Docker image to GitHub Container Registry, and deploys to server
+- **Tagged releases** (e.g., `v1.0.0`): Creates versioned images and deploys
+- **Pull requests**: Builds images for testing (does not push or deploy)
 
-The deployment timestamp is automatically set during CI/CD:
+The deployment process:
+1. Builds Docker image with deployment timestamp
+2. Pushes to `ghcr.io/<your-org>/2pams:<tag>`
+3. Connects to server via SSH
+4. Pulls latest image
+5. Restarts services using `docker-compose.prod.yml`
 
-- Uses commit timestamp for push events
-- Falls back to build start time for other events
+#### Required GitHub Secrets
+
+Configure these secrets in your GitHub repository settings:
+
+- `DEPLOY_HOST` - Server hostname or IP address
+- `DEPLOY_USER` - SSH username for deployment
+- `DEPLOY_SSH_KEY` - Private SSH key for server access
+- `DEPLOY_PORT` - SSH port (optional, defaults to 22)
+- `DEPLOY_PATH` - Path to project directory on server (optional, defaults to `~/2pams`)
+- `DEPLOY_GHCR_TOKEN` - GitHub Personal Access Token with `read:packages` permission for pulling images
 
 #### Manual Deployment
 
@@ -202,6 +215,15 @@ Pull and run:
 ```bash
 docker pull ghcr.io/<your-org>/2pams:latest
 docker run -p 3000:3000 ghcr.io/<your-org>/2pams:latest
+```
+
+Or use docker-compose on your server:
+
+```bash
+export IMAGE_NAME=ghcr.io/<your-org>/2pams:latest
+export GITHUB_REPOSITORY=<your-org>/2pams
+export DEPLOYMENT_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### Deployment Timestamp

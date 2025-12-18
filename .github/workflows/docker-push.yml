@@ -65,3 +65,54 @@ jobs:
           DEPLOYMENT_TIMESTAMP=${{ steps.timestamp.outputs.timestamp }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+    outputs:
+      timestamp: ${{ steps.timestamp.outputs.timestamp }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set deployment timestamp
+      id: timestamp
+      run: |
+        if [ -n "${{ needs.build-and-push.outputs.timestamp }}" ]; then
+          echo "timestamp=${{ needs.build-and-push.outputs.timestamp }}" >> $GITHUB_OUTPUT
+        elif [ -n "${{ github.event.head_commit.timestamp }}" ]; then
+          echo "timestamp=${{ github.event.head_commit.timestamp }}" >> $GITHUB_OUTPUT
+        else
+          echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+        fi
+      
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ secrets.DEPLOY_HOST }}
+        username: ${{ secrets.DEPLOY_USER }}
+        key: ${{ secrets.DEPLOY_SSH_KEY }}
+        port: ${{ secrets.DEPLOY_PORT || 22 }}
+        script: |
+          set -e
+          cd ${{ secrets.DEPLOY_PATH || '~/2pams' }}
+          
+          # Login to GitHub Container Registry (requires DEPLOY_GHCR_TOKEN secret)
+          echo "${{ secrets.DEPLOY_GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin || true
+          
+          # Pull latest image
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest || true
+          
+          # Set deployment timestamp and image name
+          export DEPLOYMENT_TIMESTAMP="${{ steps.timestamp.outputs.timestamp }}"
+          export IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          export GITHUB_REPOSITORY="${{ github.repository }}"
+          
+          # Update and restart services
+          docker-compose -f docker-compose.prod.yml pull app || true
+          docker-compose -f docker-compose.prod.yml up -d --no-deps app
+          
+          # Clean up old images
+          docker image prune -f

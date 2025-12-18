@@ -2,12 +2,9 @@ version: '3.8'
 
 services:
   app:
-    build:
-      context: .
-      args:
-        DEPLOYMENT_TIMESTAMP: ${DEPLOYMENT_TIMESTAMP:-}
+    image: ${IMAGE_NAME:-ghcr.io/${GITHUB_REPOSITORY:-}:latest}
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3000
       - DEPLOYMENT_TIMESTAMP=${DEPLOYMENT_TIMESTAMP:-}
     restart: unless-stopped
