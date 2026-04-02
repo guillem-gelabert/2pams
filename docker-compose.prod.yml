@@ -20,7 +20,6 @@ services:
       - ./Caddyfile.prod:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
-      - './Caddyfile:/etc/caddy/Caddyfile:ro'
       - 'www:/var/www/goaccess/:ro'
       - 'log:/var/log/caddy/'
     environment:
@@ -35,7 +34,7 @@ services:
   goaccess:
     image: allinurl/goaccess:latest
     ports:
-      - '8080:8080'
+      - '127.0.0.1:8080:8080'
     volumes:
       - './goaccess.conf:/etc/goaccess/goaccess.conf:ro'
       - 'www:/var/www/goaccess/'

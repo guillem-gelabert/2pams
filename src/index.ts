@@ -1,3 +1,4 @@
+import dns from 'dns/promises';
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import { H, Handlers } from '@highlight-run/node';
@@ -21,6 +22,29 @@ const highlightConfig = {
 };
 
 H.init(highlightConfig);
+
+// Block private/internal IP ranges to prevent SSRF (Vuln 1)
+const BLOCKED_IP_PATTERNS = [
+  /^127\./, // loopback
+  /^10\./, // RFC 1918
+  /^192\.168\./, // RFC 1918
+  /^172\.(1[6-9]|2\d|3[01])\./, // RFC 1918
+  /^169\.254\./, // link-local / cloud metadata (AWS, GCP, Azure)
+  /^0\./, // "this" network
+  /^::1$/, // IPv6 loopback
+  /^fc/i, // IPv6 unique local
+  /^fd/i, // IPv6 unique local
+];
+
+async function isSafeUrl(url: URL): Promise<boolean> {
+  if (!['http:', 'https:'].includes(url.protocol)) return false;
+  try {
+    const { address } = await dns.lookup(url.hostname);
+    return !BLOCKED_IP_PATTERNS.some(pattern => pattern.test(address));
+  } catch {
+    return false;
+  }
+}
 
 // Middleware
 app.use(express.json());
@@ -52,13 +76,37 @@ app.get('/http*', async (req: Request, res: Response) => {
     return res.sendStatus(404);
   }
 
+  // Block requests to private/internal hosts
+  if (!(await isSafeUrl(url))) {
+    return res.sendStatus(403);
+  }
+
+  // Disable redirect following to prevent SSRF via open redirects
   const site = await fetch(url.href, {
     headers,
+    redirect: 'manual',
   });
+
+  if (site.status >= 300 && site.status < 400) {
+    return res.sendStatus(403);
+  }
 
   const body = await site.text();
 
   const root = parse(body);
+
+  // Strip scripts and inline event handlers to prevent XSS
+  root.querySelectorAll('script').forEach(el => el.remove());
+  root.querySelectorAll('*').forEach(el => {
+    Object.keys(el.attributes).forEach(attr => {
+      if (attr.startsWith('on')) el.removeAttribute(attr);
+    });
+    ['href', 'src', 'action'].forEach(attrName => {
+      const val = el.getAttribute(attrName);
+      if (val != null && /^\s*javascript:/i.test(val))
+        el.removeAttribute(attrName);
+    });
+  });
 
   root.querySelectorAll('link[rel="stylesheet"]').forEach(stylesheet => {
     stylesheet.setAttribute(
