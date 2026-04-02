@@ -60,11 +60,20 @@ app.get('/http*', async (req: Request, res: Response) => {
 
   const root = parse(body);
 
-  root.querySelectorAll('link[rel="stylesheet"]').forEach(stylesheet => {
-    stylesheet.setAttribute(
-      'href',
-      `${url.origin}${stylesheet.getAttribute('href')}`
-    );
+  root.querySelectorAll('link[href]').forEach(linkTag => {
+    const hrefValue = linkTag.getAttribute('href');
+    if (!hrefValue) {
+      return;
+    }
+
+    try {
+      const resolvedHref = new URL(hrefValue, url);
+      if (resolvedHref.protocol === 'http:' || resolvedHref.protocol === 'https:') {
+        linkTag.setAttribute('href', resolvedHref.href);
+      }
+    } catch {
+      // Ignore invalid URLs and leave them unchanged
+    }
   });
 
   // Inject deployment timestamp meta tag
@@ -83,8 +92,4 @@ app.get('/http*', async (req: Request, res: Response) => {
 app.use(Handlers.errorHandler(highlightConfig));
 
 // Start server
-app.listen(PORT, () => {
-  console.info(`🚀 Server is running on port ${PORT}`);
-  console.info(`📝 Environment: ${process.env['NODE_ENV'] || 'development'}`);
-  console.info(`🔗 Health check: http://localhost:${PORT}/health`);
-});
+app.listen(PORT);
