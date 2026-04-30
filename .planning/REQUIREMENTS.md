@@ -68,27 +68,31 @@ Populated by the roadmapper.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HARDEN-01 | TBD | Pending |
-| HARDEN-02 | TBD | Pending |
-| HARDEN-03 | TBD | Pending |
-| HARDEN-04 | TBD | Pending |
-| HARDEN-05 | TBD | Pending |
-| HARDEN-06 | TBD | Pending |
-| NAV-01 | TBD | Pending |
-| NAV-02 | TBD | Pending |
-| NAV-03 | TBD | Pending |
-| DOCS-01 | TBD | Pending |
-| DOCS-02 | TBD | Pending |
-| CONFIG-01 | TBD | Pending |
-| CONFIG-02 | TBD | Pending |
-| TEST-01 | TBD | Pending |
-| TEST-02 | TBD | Pending |
+| HARDEN-01 | Phase 1 | Pending |
+| HARDEN-02 | Phase 1 | Pending |
+| HARDEN-03 | Phase 1 | Pending |
+| HARDEN-04 | Phase 1 | Pending |
+| HARDEN-05 | Phase 1 | Pending |
+| HARDEN-06 | Phase 1 | Pending |
+| NAV-01 | Phase 2 | Pending |
+| NAV-02 | Phase 2 | Pending |
+| NAV-03 | Phase 2 | Pending |
+| DOCS-01 | Phase 3 | Pending |
+| DOCS-02 | Phase 3 | Pending |
+| CONFIG-01 | Phase 3 | Pending |
+| CONFIG-02 | Phase 1 | Pending |
+| TEST-01 | Phase 1 | Pending |
+| TEST-02 | Phase 2 | Pending |
 
 **Coverage:**
 - v1 requirements: 15 total
-- Mapped to phases: 0 (roadmapper to fill)
-- Unmapped: 15 ⚠️ (will be 0 after roadmap)
+- Mapped to phases: 15 ✓
+- Unmapped: 0
+
+**Notes on cluster splits:**
+- `TEST-01` is mapped to Phase 1 (travels with the HARDEN-* behaviours it covers); `TEST-02` is mapped to Phase 2 (travels with NAV-*).
+- `CONFIG-02` (`trust proxy` runtime gating) is mapped to Phase 1 because it is a security prerequisite for `HARDEN-05` (per-IP rate limiter relying on `req.ip`).
 
 ---
 *Requirements defined: 2026-04-30*
-*Last updated: 2026-04-30 after initial definition*
+*Last updated: 2026-04-30 — traceability populated by roadmapper*
