@@ -39,6 +39,10 @@ npm run build
 npm start
 ```
 
+## Railway
+
+Deploy the Docker image to [Railway](https://railway.com/): connect the repo, use the included [`Dockerfile`](Dockerfile) and [`railway.toml`](railway.toml), then open **Settings → Networking** for a public URL. From the repo root you can also use the [Railway CLI](https://docs.railway.com/guides/cli): `railway login`, `railway link`, `railway up`. Full steps: [docs/railway.md](docs/railway.md).
+
 ## 🔧 Code Quality
 
 ### Lint code

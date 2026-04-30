@@ -18,7 +18,9 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Expose the port
+ENV NODE_ENV=production
+
+# Railway and other hosts set PORT at runtime; default matches local/prod compose
 EXPOSE 3000
 
 CMD ["npm", "run", "start"]

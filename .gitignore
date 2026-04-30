@@ -91,4 +91,20 @@ jspm_packages/
 
 # Temporary folders
 tmp/
-temp/ 
+temp/
+
+# Playwright
+/playwright-report/
+/test-results/
+/blob-report/
+/playwright/.cache/
+
+# lnai-generated
+.ai/.lnai-manifest.json
+.claude/CLAUDE.md
+.claude/rules
+.claude/settings.json
+.cursor/mcp.json
+.cursor/rules/001-mentorship-mode.mdc
+AGENTS.md
+# end lnai-generated

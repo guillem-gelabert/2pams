@@ -2,22 +2,19 @@
 
 # Local development with TLS
 2pams.local {
+    header {
+        Content-Security-Policy "default-src https: data: blob: 'unsafe-inline' 'unsafe-eval'; img-src https: data: blob:; connect-src https:; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer"
+        Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), midi=(), bluetooth=(), display-capture=(), notifications=(), interest-cohort=()"
+        -Set-Cookie
+        -Server
+    }
+    request_header -Cookie
     reverse_proxy localhost:3000
     tls internal
-    
     log {
         output file /var/log/caddy/access.log
         format json
     }
-}
-
-dashboard.2pams.local {
-    basic_auth {
-        {$DASHBOARD_USER} {$DASHBOARD_PASSWORD}
-    }
-
-    file_server / {
-        root /app/public
-    }
-    
 }

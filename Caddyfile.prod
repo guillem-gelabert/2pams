@@ -1,17 +1,19 @@
 # Simple Caddyfile for 2pams Express.js app
 
 {$DOMAIN:localhost} {
+    header {
+        Content-Security-Policy "default-src https: data: blob: 'unsafe-inline' 'unsafe-eval'; img-src https: data: blob:; connect-src https:; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer"
+        Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), midi=(), bluetooth=(), display-capture=(), notifications=(), interest-cohort=()"
+        -Set-Cookie
+        -Server
+    }
+    request_header -Cookie
     reverse_proxy app:{$PORT:3000}
     log {
          output file /var/log/caddy/access.log
          format json
     }
-}
-
-dashboard.{$DOMAIN} {
-    basic_auth / {
-        {$DASHBOARD_USER} {$DASHBOARD_PASSWORD}
-    }
-
-    respond "2pams dashboard"
 }

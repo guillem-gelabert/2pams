@@ -1,0 +1,11 @@
+# https://docs.railway.com/guides/config-as-code
+# Railway runs the Dockerfile; PORT is injected at runtime.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"

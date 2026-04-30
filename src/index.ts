@@ -1,16 +1,17 @@
 import dns from 'dns/promises';
-import express, { Request, Response } from 'express';
+import express, { Request, Response as ExpressResponse } from 'express';
 import dotenv from 'dotenv';
 import { H, Handlers } from '@highlight-run/node';
 import { parse } from 'node-html-parser';
+import { useAppSecurityHeadersIfNeeded } from './security-headers';
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
+useAppSecurityHeadersIfNeeded(app);
 const PORT = process.env['PORT'] || 3000;
 
-// Deployment timestamp: use env var if set during deployment, otherwise use server start time
 const DEPLOYMENT_TIMESTAMP =
   process.env['DEPLOYMENT_TIMESTAMP'] || new Date().toISOString();
 
@@ -23,17 +24,17 @@ const highlightConfig = {
 
 H.init(highlightConfig);
 
-// Block private/internal IP ranges to prevent SSRF (Vuln 1)
+// SSRF: block private/internal IP ranges
 const BLOCKED_IP_PATTERNS = [
-  /^127\./, // loopback
-  /^10\./, // RFC 1918
-  /^192\.168\./, // RFC 1918
-  /^172\.(1[6-9]|2\d|3[01])\./, // RFC 1918
-  /^169\.254\./, // link-local / cloud metadata (AWS, GCP, Azure)
-  /^0\./, // "this" network
-  /^::1$/, // IPv6 loopback
-  /^fc/i, // IPv6 unique local
-  /^fd/i, // IPv6 unique local
+  /^127\./,
+  /^10\./,
+  /^192\.168\./,
+  /^172\.(1[6-9]|2\d|3[01])\./,
+  /^169\.254\./,
+  /^0\./,
+  /^::1$/,
+  /^fc/i,
+  /^fd/i,
 ];
 
 async function isSafeUrl(url: URL): Promise<boolean> {
@@ -46,23 +47,12 @@ async function isSafeUrl(url: URL): Promise<boolean> {
   }
 }
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
-app.use(Handlers.middleware(highlightConfig));
-
-// Health check endpoint
-app.get('/health', (_req: Request, res: Response) => {
-  res.json({
-    status: 'OK',
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-  });
-});
-
-app.get('/http*', async (req: Request, res: Response) => {
-  H.log('http', 'test');
+async function runProxy(
+  res: ExpressResponse,
+  param0: string,
+  log: boolean
+): Promise<void> {
+  if (log) H.log('http', 'test');
 
   const headers = {
     'User-Agent':
@@ -71,36 +61,41 @@ app.get('/http*', async (req: Request, res: Response) => {
 
   let url: URL;
   try {
-    url = new URL(`http${req.params[0]}`);
-  } catch (e) {
-    return res.sendStatus(404);
+    url = new URL(`http${param0}`);
+  } catch {
+    res.sendStatus(404);
+    return;
   }
 
-  // Block requests to private/internal hosts
   if (!(await isSafeUrl(url))) {
-    return res.sendStatus(403);
+    res.sendStatus(403);
+    return;
   }
 
-  // Disable redirect following to prevent SSRF via open redirects
-  const site = await fetch(url.href, {
-    headers,
-    redirect: 'manual',
-  });
+  let site: Awaited<ReturnType<typeof fetch>>;
+  try {
+    site = await fetch(url.href, {
+      headers,
+      redirect: 'manual',
+    });
+  } catch {
+    res.sendStatus(502);
+    return;
+  }
 
   if (site.status >= 300 && site.status < 400) {
-    return res.sendStatus(403);
+    res.sendStatus(403);
+    return;
   }
 
   const body = await site.text();
-
   const root = parse(body);
 
-  // Strip scripts and inline event handlers to prevent XSS
-  root.querySelectorAll('script').forEach(el => el.remove());
+  // Defense-in-depth: strip javascript: pseudo-URLs from URL-ish attributes.
+  // NOTE: <script> and on* handlers are intentionally NOT stripped in this
+  // iframe-less variant — proxied JS runs first-party. The 2nd-domain
+  // solution (eTLD+1 separation) restores isolation.
   root.querySelectorAll('*').forEach(el => {
-    Object.keys(el.attributes).forEach(attr => {
-      if (attr.startsWith('on')) el.removeAttribute(attr);
-    });
     ['href', 'src', 'action'].forEach(attrName => {
       const val = el.getAttribute(attrName);
       if (val != null && /^\s*javascript:/i.test(val))
@@ -115,7 +110,6 @@ app.get('/http*', async (req: Request, res: Response) => {
     );
   });
 
-  // Inject deployment timestamp meta tag
   const head = root.querySelector('head');
   if (head) {
     const metaTagHtml = `<meta name="deployment-timestamp" content="${DEPLOYMENT_TIMESTAMP}">`;
@@ -125,12 +119,34 @@ app.get('/http*', async (req: Request, res: Response) => {
     }
   }
 
-  return res.send(root.toString());
+  res.removeHeader('Set-Cookie');
+  res.setHeader('Cache-Control', 'no-store');
+  res.send(root.toString());
+}
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
+app.use(Handlers.middleware(highlightConfig));
+
+app.get('/health', (_req: Request, res: ExpressResponse) => {
+  res.json({
+    status: 'OK',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get('/http*', async (req: Request, res: ExpressResponse) => {
+  const p0 = req.params[0];
+  if (p0 === undefined) {
+    return res.sendStatus(404);
+  }
+  return runProxy(res, p0, true);
 });
 
 app.use(Handlers.errorHandler(highlightConfig));
 
-// Start server
 app.listen(PORT, () => {
   console.info(`🚀 Server is running on port ${PORT}`);
   console.info(`📝 Environment: ${process.env['NODE_ENV'] || 'development'}`);
