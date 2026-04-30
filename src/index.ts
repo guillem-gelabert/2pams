@@ -7,9 +7,35 @@ import { useAppSecurityHeadersIfNeeded } from './security-headers';
 
 dotenv.config();
 
+/**
+ * Role-based deployment for the same-site separation security model.
+ *
+ *  unset    → monolith (iframe-less; /http* serves proxied HTML directly).
+ *             Less secure: proxied JS runs first-party. Used for the
+ *             interim variant while a 2nd-domain isn't configured.
+ *  'shell'  → trusted UI host. /http* responds 302 → CONTENT_ORIGIN+url.
+ *             Strict CSP. No proxied content lives here.
+ *  'content'→ untrusted sandbox host (different eTLD+1 from shell).
+ *             /http* serves the proxied HTML. Browser same-site policy
+ *             keeps cookies/storage/SW from ever reaching the shell.
+ */
+type Role = 'shell' | 'content' | 'monolith';
+
+const ROLE: Role = ((): Role => {
+  const v = (process.env['ROLE'] || '').toLowerCase();
+  if (v === 'shell' || v === 'content') return v;
+  return 'monolith';
+})();
+
+const CONTENT_ORIGIN = process.env['CONTENT_ORIGIN'] || '';
+
+if (ROLE === 'shell' && !CONTENT_ORIGIN) {
+  throw new Error('ROLE=shell requires CONTENT_ORIGIN env var');
+}
+
 const app = express();
 app.set('trust proxy', 1);
-useAppSecurityHeadersIfNeeded(app);
+useAppSecurityHeadersIfNeeded(app, ROLE);
 const PORT = process.env['PORT'] || 3000;
 
 const DEPLOYMENT_TIMESTAMP =
@@ -93,8 +119,8 @@ async function runProxy(
 
   // Defense-in-depth: strip javascript: pseudo-URLs from URL-ish attributes.
   // NOTE: <script> and on* handlers are intentionally NOT stripped in this
-  // iframe-less variant — proxied JS runs first-party. The 2nd-domain
-  // solution (eTLD+1 separation) restores isolation.
+  // iframe-less variant — the user accepts the reduced isolation and runs
+  // proxied JS as first-party. The 2nd-domain solution restores isolation.
   root.querySelectorAll('*').forEach(el => {
     ['href', 'src', 'action'].forEach(attrName => {
       const val = el.getAttribute(attrName);
@@ -142,6 +168,13 @@ app.get('/http*', async (req: Request, res: ExpressResponse) => {
   if (p0 === undefined) {
     return res.sendStatus(404);
   }
+
+  if (ROLE === 'shell') {
+    // 302 to the content (untrusted) origin; browser navigates top-level.
+    // No body needed; res.redirect sets Location + 302.
+    return res.redirect(302, `${CONTENT_ORIGIN}${req.originalUrl}`);
+  }
+
   return runProxy(res, p0, true);
 });
 
@@ -150,5 +183,6 @@ app.use(Handlers.errorHandler(highlightConfig));
 app.listen(PORT, () => {
   console.info(`🚀 Server is running on port ${PORT}`);
   console.info(`📝 Environment: ${process.env['NODE_ENV'] || 'development'}`);
+  console.info(`🎭 Role: ${ROLE}${CONTENT_ORIGIN ? ` → ${CONTENT_ORIGIN}` : ''}`);
   console.info(`🔗 Health check: http://localhost:${PORT}/health`);
 });

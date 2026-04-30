@@ -6,6 +6,9 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
+    "dev:shell": "PORT=3000 ROLE=shell CONTENT_ORIGIN=http://content.2pams-sandbox.local:3001 nodemon src/index.ts",
+    "dev:content": "PORT=3001 ROLE=content nodemon src/index.ts",
+    "dev:2-domains": "concurrently -n shell,content -c blue,magenta \"npm:dev:shell\" \"npm:dev:content\"",
     "build": "tsc",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
@@ -13,6 +16,8 @@
     "format:check": "prettier --check \"src/**/*.ts\"",
     "test:e2e": "playwright test",
     "test:e2e:railway": "PLAYWRIGHT_BASE_URL=https://2pa.ms playwright test",
+    "test:e2e:2-domains": "playwright test --config playwright.2-domains.config.ts",
+    "test:e2e:2-domains:railway": "PLAYWRIGHT_SHELL_URL=https://2pa.ms PLAYWRIGHT_CONTENT_URL=https://2pams-content-production.up.railway.app playwright test --config playwright.2-domains.config.ts",
     "test": "playwright test"
   },
   "keywords": [
