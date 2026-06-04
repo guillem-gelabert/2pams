@@ -70,6 +70,7 @@
 | Date | Slug | Description |
 |------|------|-------------|
 | 2026-06-04 | revert-single-domain | Reverted from two-domain shell/content split to single-domain monolith |
+| 2026-06-04 | rewrite-relative-urls | Rewrite relative src/href/action/srcset to upstream origin in proxied HTML |
 
 ---
 
