@@ -2,7 +2,7 @@ import dns from 'dns/promises';
 import express, { Request, Response as ExpressResponse } from 'express';
 import dotenv from 'dotenv';
 import { H, Handlers } from '@highlight-run/node';
-import { parse } from 'node-html-parser';
+import { parse, HTMLElement as ParsedHTMLElement } from 'node-html-parser';
 import { useAppSecurityHeadersIfNeeded } from './security-headers';
 
 dotenv.config();
@@ -91,24 +91,55 @@ async function runProxy(
   const body = await site.text();
   const root = parse(body);
 
-  // Defense-in-depth: strip javascript: pseudo-URLs from URL-ish attributes.
-  // NOTE: <script> and on* handlers are intentionally NOT stripped in this
-  // iframe-less variant — the user accepts the reduced isolation and runs
-  // proxied JS as first-party. The 2nd-domain solution restores isolation.
-  root.querySelectorAll('*').forEach(el => {
-    ['href', 'src', 'action'].forEach(attrName => {
-      const val = el.getAttribute(attrName);
-      if (val != null && /^\s*javascript:/i.test(val))
-        el.removeAttribute(attrName);
-    });
-  });
+  // Resolve a single URL-valued attribute: strip javascript:, resolve relative
+  // URLs against the upstream origin, leave absolute URLs unchanged.
+  const resolveAttr = (el: ParsedHTMLElement, attrName: string): void => {
+    const val = el.getAttribute(attrName);
+    if (val == null) return;
+    if (/^\s*javascript:/i.test(val)) {
+      el.removeAttribute(attrName);
+      return;
+    }
+    // Leave data:, blob:, and protocol-relative (//host) as-is.
+    if (/^\s*(data:|blob:|\/\/)/i.test(val)) return;
+    try {
+      el.setAttribute(attrName, new URL(val.trim(), url.href).href);
+    } catch {
+      // Unparseable value — leave unchanged.
+    }
+  };
 
-  root.querySelectorAll('link[rel="stylesheet"]').forEach(stylesheet => {
-    stylesheet.setAttribute(
-      'href',
-      `${url.origin}${stylesheet.getAttribute('href')}`
-    );
+  // Resolve each URL token inside a srcset attribute.
+  // Format: "<url> [descriptor], <url> [descriptor], ..."
+  const resolveSrcset = (el: ParsedHTMLElement): void => {
+    const val = el.getAttribute('srcset');
+    if (val == null) return;
+    const resolved = val
+      .split(',')
+      .map(entry => {
+        const parts = entry.trim().split(/\s+/);
+        const urlToken = parts[0];
+        if (!urlToken) return entry;
+        if (/^\s*(data:|blob:|\/\/)/i.test(urlToken)) return entry;
+        try {
+          const abs = new URL(urlToken.trim(), url.href).href;
+          return [abs, ...parts.slice(1)].join(' ');
+        } catch {
+          return entry;
+        }
+      })
+      .join(', ');
+    el.setAttribute('srcset', resolved);
+  };
+
+  // NOTE: <script> and on* handlers are intentionally NOT stripped —
+  // the user accepts reduced isolation and proxied JS runs first-party.
+  root.querySelectorAll('*').forEach(el => {
+    resolveAttr(el, 'src');
+    resolveAttr(el, 'href');
+    resolveAttr(el, 'action');
   });
+  root.querySelectorAll('img, source').forEach(el => resolveSrcset(el));
 
   const head = root.querySelector('head');
   if (head) {
