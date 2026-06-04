@@ -4,12 +4,12 @@
 
 - **What:** URL proxy at `https://2pa.ms` — paste any URL after the slash and the server fetches it from a sandboxed origin so framing/embedding restrictions don't block the view.
 - **Core value:** Open any URL even when the upstream refuses to be framed/embedded — without giving the upstream's JavaScript any access to the user's first-party state on `2pa.ms`.
-- **Current focus:** Milestone 1 — harden the production proxy, fix in-page navigation, sync docs to the shipped 2-domain architecture.
+- **Current focus:** Milestone 1 — harden the production proxy, fix in-page navigation, sync docs to the current single-domain monolith.
 - **Pointers:** `.planning/PROJECT.md` · `.planning/REQUIREMENTS.md` · `.planning/ROADMAP.md` · `.planning/codebase/`
 
 ## Current Position
 
-- **Milestone:** 1 (post 2-domain ship — Validated set in `PROJECT.md` already in production).
+- **Milestone:** 1 (reverted from 2-domain to single-domain monolith on 2026-06-04).
 - **Phase:** Not started — roadmap defined, awaiting `/gsd-plan-phase 1`.
 - **Plan:** —
 - **Status:** Ready for Phase 1 planning.
@@ -34,8 +34,7 @@
 
 ### Key Decisions (carried forward from PROJECT.md)
 
-- 2-domain (eTLD+1) split via `ROLE=shell` + `ROLE=content` is the production containment model. Same codebase, different `ROLE` env per Railway service.
-- Content origin is `*.up.railway.app` (Railway-provided) for now; promote to a custom eTLD+1 only if/when URL-bar UX matters.
+- **2026-06-04:** Reverted to single-domain monolith. ROLE=shell/content split removed. Proxied HTML now served from the same origin as the UI. See `.planning/quick/20260604-revert-single-domain/` for security notes.
 - Playwright e2e only — no unit tests. Surface area is small enough that black-box e2e covers more risk per token. Re-evaluate if the rewriter (NAV-*) grows.
 - `redirect: 'manual'` → 403 on any 3xx upstream is a known-bad UX, kept until HARDEN-04 ships in Phase 1.
 - Hardcoded Bingbot User-Agent is a deliberate temporary state; replaced by HARDEN-06 in Phase 1.
@@ -65,6 +64,12 @@
 - **Last session:** 2026-04-30 — initialized milestone 1 (PROJECT.md, REQUIREMENTS.md, codebase mapping, this roadmap).
 - **Next action:** `/gsd-plan-phase 1` — plan the hardening phase. Dependencies surfaced in `ROADMAP.md` allow internal parallelization across the three plan clusters (SSRF/DNS, fetch bounds + redirects, abuse controls).
 - **Files of record:** `.planning/ROADMAP.md` (phase contract) · `.planning/REQUIREMENTS.md` (traceability) · `.planning/codebase/CONCERNS.md` (anchors per requirement).
+
+## Quick Tasks Completed
+
+| Date | Slug | Description |
+|------|------|-------------|
+| 2026-06-04 | revert-single-domain | Reverted from two-domain shell/content split to single-domain monolith |
 
 ---
 
