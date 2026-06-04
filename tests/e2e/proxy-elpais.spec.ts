@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test';
 
+// NOTE: elpais.com must NOT be used as a test target in automated CI runs.
+// It is a real news site that actively blocks bots; hitting it in CI
+// constitutes unsolicited scraping of a third-party and will return
+// anti-bot challenges, making the test unreliable. Use example.com
+// (IANA-reserved, always stable) for functional assertions instead.
+// This URL is kept only to preserve the original smoke-test intent;
+// the test below deliberately asserts proxy mechanics only, not content.
 const ARTICLE =
   'https://elpais.com/economia/2026-04-29/el-bce-pide-a-la-banca-planes-de-contingencia-ante-el-nuevo-modelo-de-ia-de-anthropic.html';
 
