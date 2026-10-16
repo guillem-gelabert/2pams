@@ -4,12 +4,42 @@ import dotenv from 'dotenv';
 import { H, Handlers } from '@highlight-run/node';
 import { parse, HTMLElement as ParsedHTMLElement } from 'node-html-parser';
 import { useAppSecurityHeadersIfNeeded } from './security-headers';
+import {
+  isChallengePage,
+  renderChallengedPage,
+  shouldTryBrowserFallback,
+} from './browser-fallback';
 
 dotenv.config();
 
 const app = express();
 app.set('trust proxy', 1);
-useAppSecurityHeadersIfNeeded(app);
+app.disable('x-powered-by');
+type Role = 'shell' | 'content' | 'monolith';
+const roleValue = (process.env['ROLE'] || '').toLowerCase();
+if (roleValue && roleValue !== 'shell' && roleValue !== 'content') {
+  throw new Error('ROLE must be shell or content when set');
+}
+const ROLE: Role = (roleValue || 'monolith') as Role;
+const CONTENT_ORIGIN = process.env['CONTENT_ORIGIN'] || '';
+if (ROLE === 'shell') {
+  let origin: URL;
+  try {
+    origin = new URL(CONTENT_ORIGIN);
+  } catch {
+    throw new Error('ROLE=shell requires a valid CONTENT_ORIGIN');
+  }
+  if (
+    !['http:', 'https:'].includes(origin.protocol) ||
+    origin.origin !== CONTENT_ORIGIN
+  ) {
+    throw new Error('CONTENT_ORIGIN must be an HTTP(S) origin without a path');
+  }
+  if (origin.hostname === '2pa.ms' || origin.hostname.endsWith('.2pa.ms')) {
+    throw new Error('CONTENT_ORIGIN must be outside the 2pa.ms site');
+  }
+}
+useAppSecurityHeadersIfNeeded(app, ROLE);
 const PORT = process.env['PORT'] || 3000;
 
 const DEPLOYMENT_TIMESTAMP =
@@ -88,8 +118,34 @@ async function runProxy(
     return;
   }
 
-  const body = await site.text();
+  let body = await site.text();
+  let usedBrowser = false;
+  if (isChallengePage(body)) {
+    if (!shouldTryBrowserFallback(url, site.status, body, ROLE)) {
+      res.status(403).send('Upstream verification could not be completed');
+      return;
+    }
+    const rendered = await renderChallengedPage(url, isSafeUrl);
+    if (!rendered) {
+      res.status(403).send('Upstream verification could not be completed');
+      return;
+    }
+    body = rendered.html;
+    url = rendered.url;
+    usedBrowser = true;
+  }
   const root = parse(body);
+
+  // Browser fallback is a rendered article snapshot; replaying its scripts on
+  // the proxy origin would restart the upstream challenge without its cookie.
+  if (usedBrowser) {
+    root.querySelectorAll('script').forEach(script => script.remove());
+    root.querySelectorAll('*').forEach(el => {
+      for (const attr of Object.keys(el.attributes)) {
+        if (/^on/i.test(attr)) el.removeAttribute(attr);
+      }
+    });
+  }
 
   // Resolve a single URL-valued attribute: strip javascript:, resolve relative
   // URLs against the upstream origin, leave absolute URLs unchanged.
@@ -157,7 +213,7 @@ async function runProxy(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
+if (ROLE !== 'content') app.use(express.static('public'));
 app.use(Handlers.middleware(highlightConfig));
 
 app.get('/health', (_req: Request, res: ExpressResponse) => {
@@ -174,6 +230,10 @@ app.get('/http*', async (req: Request, res: ExpressResponse) => {
     return res.sendStatus(404);
   }
 
+  if (ROLE === 'shell') {
+    return res.redirect(302, `${CONTENT_ORIGIN}${req.originalUrl}`);
+  }
+
   return runProxy(res, p0, true);
 });
 
@@ -182,5 +242,6 @@ app.use(Handlers.errorHandler(highlightConfig));
 app.listen(PORT, () => {
   console.info(`🚀 Server is running on port ${PORT}`);
   console.info(`📝 Environment: ${process.env['NODE_ENV'] || 'development'}`);
+  console.info(`🎭 Role: ${ROLE}`);
   console.info(`🔗 Health check: http://localhost:${PORT}/health`);
 });

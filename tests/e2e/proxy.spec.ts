@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+/* global document */
 
 /** Stable upstream — verifies the proxy fetches and serves content end-to-end. */
 test('proxies example.com and renders visible content', async ({
@@ -9,7 +10,9 @@ test('proxies example.com and renders visible content', async ({
     waitUntil: 'domcontentloaded',
   });
   expect(response!.status()).toBe(200);
-  await expect(page.locator('h1')).toHaveText(/example domain/i);
+  await expect(page.locator('body')).toContainText(
+    'This domain is for use in documentation examples'
+  );
 });
 
 test('relative URLs in proxied HTML are rewritten to upstream origin', async ({

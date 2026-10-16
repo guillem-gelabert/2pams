@@ -7,8 +7,8 @@ const PERMISSIONS_POLICY =
 function isRailwayRuntime(): boolean {
   return Boolean(
     process.env['RAILWAY_PROJECT_ID'] ||
-      process.env['RAILWAY_SERVICE_ID'] ||
-      process.env['RAILWAY_PUBLIC_DOMAIN']
+    process.env['RAILWAY_SERVICE_ID'] ||
+    process.env['RAILWAY_PUBLIC_DOMAIN']
   );
 }
 
@@ -25,11 +25,15 @@ const BASE_HEADERS = {
   'Permissions-Policy': PERMISSIONS_POLICY,
 } as const;
 
-/**
- * Permissive CSP for the monolith — proxied sites need inline JS/CSS and
- * eval. Containment is NOT provided by CSP here; the proxied JS runs
- * first-party. Service workers are forbidden to prevent persistent takeover.
- */
+type Role = 'shell' | 'content' | 'monolith';
+
+const SHELL_CSP =
+  "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'";
+
+const CONTENT_CSP =
+  "default-src https: data: blob: 'unsafe-inline' 'unsafe-eval'; img-src https: data: blob:; connect-src https:; worker-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
+
+/** Proxied scripts run first-party in the legacy monolith mode. */
 const MONOLITH_CSP =
   "default-src https: data: blob: 'unsafe-inline' 'unsafe-eval'; img-src https: data: blob:; connect-src https:; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
 
@@ -40,7 +44,7 @@ const MONOLITH_CSP =
  * Enable on Railway (Railway sets `RAILWAY_PROJECT_ID`, etc.) or locally
  * with `APPLY_SECURITY_HEADERS=1`.
  */
-export function useAppSecurityHeadersIfNeeded(app: Express): void {
+export function useAppSecurityHeadersIfNeeded(app: Express, role: Role): void {
   if (!shouldApplyAppSecurityHeaders()) {
     return;
   }
@@ -48,8 +52,18 @@ export function useAppSecurityHeadersIfNeeded(app: Express): void {
   app.use((_req: Request, res: Response, next: NextFunction) => {
     res.set({
       ...BASE_HEADERS,
-      'Content-Security-Policy': MONOLITH_CSP,
+      'Content-Security-Policy':
+        role === 'shell'
+          ? SHELL_CSP
+          : role === 'content'
+            ? CONTENT_CSP
+            : MONOLITH_CSP,
     });
+    if (role !== 'monolith') res.setHeader('X-Frame-Options', 'DENY');
+    if (role === 'shell') {
+      res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+      res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+    }
     res.removeHeader('Server');
     next();
   });
