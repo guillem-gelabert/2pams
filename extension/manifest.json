@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "2pa.ms Live Article Bridge",
+  "version": "0.1.0",
+  "description": "Open El País articles inside the isolated 2pa.ms content view using this browser's session.",
+  "minimum_chrome_version": "109",
+  "permissions": ["declarativeNetRequestWithHostAccess"],
+  "host_permissions": [
+    "https://elpais.com/*",
+    "https://*.elpais.com/*",
+    "https://cooperative-flexibility-production.up.railway.app/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://cooperative-flexibility-production.up.railway.app/*"
+      ],
+      "js": ["bridge.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      { "id": "elpais_from_content", "enabled": true, "path": "rules.json" }
+    ]
+  }
+}
