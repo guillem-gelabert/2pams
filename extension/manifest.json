@@ -1,14 +1,23 @@
 {
   "manifest_version": 3,
   "name": "2pa.ms El País Redirect",
-  "version": "0.2.0",
-  "description": "Open El País links entered through 2pa.ms as top-level pages in this browser.",
+  "version": "0.3.0",
+  "description": "Open El País links entered through 2pa.ms as top-level pages without another extension.",
   "minimum_chrome_version": "109",
   "permissions": ["declarativeNetRequestWithHostAccess"],
   "host_permissions": [
     "https://2pa.ms/*",
     "https://elpais.com/*",
-    "https://www.elpais.com/*"
+    "https://*.elpais.com/*",
+    "https://*.prisa.com/*",
+    "https://*.ampproject.org/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://elpais.com/*", "https://*.elpais.com/*"],
+      "css": ["elpais.css"],
+      "run_at": "document_start"
+    }
   ],
   "declarative_net_request": {
     "rule_resources": [

@@ -12,5 +12,25 @@
       "regexFilter": "^https://2pa\\.ms/https://(www\\.)?elpais\\.com(/.*)$",
       "resourceTypes": ["main_frame"]
     }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "initiatorDomains": ["elpais.com"],
+      "regexFilter": "(\\.prisa\\.com/dist/subs/pmwall/.+/pmwall\\.min\\.js|\\.ampproject\\.org/v0/amp-access-.+\\.js)",
+      "resourceTypes": ["script", "xmlhttprequest"]
+    }
+  },
+  {
+    "id": 3,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "initiatorDomains": ["elpais.com"],
+      "regexFilter": "/arc/subs/p\\.min\\.js",
+      "resourceTypes": ["script", "xmlhttprequest"]
+    }
   }
 ]
