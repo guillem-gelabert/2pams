@@ -41,7 +41,7 @@ npm start
 
 ## Railway
 
-Deploy the Docker image to [Railway](https://railway.com/): connect the repo, use the included [`Dockerfile`](Dockerfile) and [`railway.toml`](railway.toml), then open **Settings → Networking** for a public URL. From the repo root you can also use the [Railway CLI](https://docs.railway.com/guides/cli): `railway login`, `railway link`, `railway up`. Full steps: [docs/railway.md](docs/railway.md).
+The recommended Railway topology uses a shell service at `2pa.ms` and a separate content service on a generated Railway domain. The content service can use [`railway.browser.toml`](railway.browser.toml) for a bounded browser fallback after an upstream challenge. Setup and verification: [docs/railway.md](docs/railway.md).
 
 ## 🔧 Code Quality
 
