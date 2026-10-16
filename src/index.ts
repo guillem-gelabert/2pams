@@ -9,6 +9,11 @@ import {
   renderChallengedPage,
   shouldTryBrowserFallback,
 } from './browser-fallback';
+import {
+  shouldUseLiveBrowser,
+  startLiveBrowser,
+  useLiveBrowserRoutes,
+} from './live-browser';
 
 dotenv.config();
 
@@ -215,6 +220,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 if (ROLE !== 'content') app.use(express.static('public'));
 app.use(Handlers.middleware(highlightConfig));
+if (ROLE === 'content') useLiveBrowserRoutes(app);
 
 app.get('/health', (_req: Request, res: ExpressResponse) => {
   res.json({
@@ -232,6 +238,19 @@ app.get('/http*', async (req: Request, res: ExpressResponse) => {
 
   if (ROLE === 'shell') {
     return res.redirect(302, `${CONTENT_ORIGIN}${req.originalUrl}`);
+  }
+
+  if (ROLE === 'content') {
+    let target: URL;
+    try {
+      target = new URL(`http${p0}`);
+    } catch {
+      return res.sendStatus(404);
+    }
+    if (shouldUseLiveBrowser(target, ROLE)) {
+      if (!(await isSafeUrl(target))) return res.sendStatus(403);
+      return startLiveBrowser(res, target, isSafeUrl);
+    }
   }
 
   return runProxy(res, p0, true);

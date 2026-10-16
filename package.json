@@ -12,6 +12,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "test:e2e": "playwright test",
+    "test:live-browser": "playwright test --config playwright.live-browser.config.ts",
     "test:extension": "playwright test --config playwright.extension.config.ts",
     "test:e2e:railway": "PLAYWRIGHT_BASE_URL=https://2pa.ms playwright test",
     "test": "playwright test"
