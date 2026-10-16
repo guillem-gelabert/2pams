@@ -43,7 +43,7 @@ npm start
 
 The recommended Railway topology uses a shell service at `2pa.ms` and a separate content service on a generated Railway domain. The content service uses [`Dockerfile.browser`](Dockerfile.browser) for a bounded browser fallback after an upstream challenge. Setup and verification: [docs/railway.md](docs/railway.md).
 
-For interactive El País pages that the Railway browser still cannot open, the optional [Chrome live article bridge](extension/README.md) can display the upstream page inside the isolated content origin using the reader's Chrome session. It requires a separate unpacked extension and manual verification with Bypass Paywalls Clean.
+For interactive El País pages that the Railway browser still cannot open, the optional [Chrome redirect extension](extension/README.md) opens a `2pa.ms/https://elpais.com/...` link as a top-level El País page in the reader's Chrome session. It requires Bypass Paywalls Clean and changes the address bar to `elpais.com`.
 
 ## 🔧 Code Quality
 

@@ -6,8 +6,8 @@ status: incomplete
 
 # Summary
 
-Added an unpacked Manifest V3 Chrome extension for El País URLs opened through the Railway content origin. It embeds the live upstream article in a cross-origin iframe, allowing interactive controls to run on the upstream origin. A narrowly scoped network rule removes framing headers only from El País subframe responses initiated by the content origin. The trusted `2pa.ms` shell and server cookie policy are unchanged.
+The first Manifest V3 extension framed El País inside the Railway content origin. The user confirmed its header appeared but the article did not. Their console showed El País scripts running, cookie errors, and a blocked cross-origin parent-frame read. The iframe approach therefore failed in the user's Chrome profile.
 
-The extension passed a controlled local browser test: an article fixture with both `X-Frame-Options: DENY` and `frame-ancestors 'none'` loaded in the frame and its button remained interactive. No automated request to El País or another news site was made.
+The user approved a top-level redirect from `2pa.ms/https://elpais.com/...` to the live El País page. The extension now uses a narrowly scoped main-frame redirect rule and no longer removes response headers or injects a content script. A controlled local browser test confirms that it redirects before contacting the entry server, preserves the path and query, leaves other targets alone, and keeps a button interactive on the destination page. No automated request to El País or another news site was made.
 
-The user must load the extension in the same Chrome profile as Bypass Paywalls Clean and manually verify the exact article. Third-party cookie policy or site behavior may still prevent the page from working in a frame. No Railway or Cloudflare settings were changed for this task.
+The user must reload the unpacked extension in the same Chrome profile as Bypass Paywalls Clean and manually verify the exact article. The final address bar will show `elpais.com`. No Railway or Cloudflare settings were changed for this task.

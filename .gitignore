@@ -99,6 +99,9 @@ temp/
 /blob-report/
 /playwright/.cache/
 
+# Chrome-generated data for the unpacked extension
+/extension/_metadata/
+
 # lnai-generated
 .ai/.lnai-manifest.json
 .claude/CLAUDE.md
