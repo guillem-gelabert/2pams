@@ -7,9 +7,9 @@ The proxy supports a two-service deployment. `2pa.ms` serves the landing page an
 | Service | Source | Variables | Domain |
 | --- | --- | --- | --- |
 | Shell | This repo, current Railpack build | `ROLE=shell`, `CONTENT_ORIGIN=https://<content>.up.railway.app` | `2pa.ms` |
-| Content | This repo, config file `/railway.browser.toml` | `ROLE=content`, optionally `BROWSER_FALLBACK_HOSTS=<host>` | Generated Railway domain |
+| Content | This repo, Dockerfile path `Dockerfile.browser` | `ROLE=content`, optionally `BROWSER_FALLBACK_HOSTS=<host>` | Generated Railway domain |
 
-Create the content service in the existing Railway project and set its **Railway Config File** path to `/railway.browser.toml`. That file selects `Dockerfile.browser`; the repository's default `railway.toml` selects the ordinary Dockerfile and would otherwise override service build settings. Generate the content service's Railway domain, then set `CONTENT_ORIGIN` on the shell to that exact HTTPS origin (no trailing slash). Set the shell role only after the content service passes `/health`. Both services use the same source and `/health` path. Railway injects `PORT`; do not set it manually. If the app is exposed directly without Railway's injected variables, set `APPLY_SECURITY_HEADERS=1`.
+Create the content service in the existing Railway project and set its Dockerfile path to `Dockerfile.browser` (or set `RAILWAY_DOCKERFILE_PATH=Dockerfile.browser`). The root `railway.toml` was removed because its default Dockerfile setting overrode the content service's build settings. Set `/health` as the Railway healthcheck path for both services. Generate the content service's Railway domain, then set `CONTENT_ORIGIN` on the shell to that exact HTTPS origin (no trailing slash). Set the shell role only after the content service passes `/health`. Railway injects `PORT`; do not set it manually. If the app is exposed directly without Railway's injected variables, set `APPLY_SECURITY_HEADERS=1`.
 
 The content service needs a browser-capable image. `Dockerfile.browser` uses Node 24 on Debian because Playwright's Chromium build does not support Alpine. A 500 MB memory limit is unlikely to leave room for Chromium; allocate enough memory before enabling the fallback. The ordinary fetch path does not launch a browser.
 
