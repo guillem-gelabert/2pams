@@ -41,7 +41,7 @@ npm start
 
 ## Railway
 
-The recommended Railway topology uses a shell service at `2pa.ms` and a separate content service on a generated Railway domain. The content service can use [`railway.browser.toml`](railway.browser.toml) for a bounded browser fallback after an upstream challenge. Setup and verification: [docs/railway.md](docs/railway.md).
+The recommended Railway topology uses a shell service at `2pa.ms` and a separate content service on a generated Railway domain. The content service uses [`Dockerfile.browser`](Dockerfile.browser) for a bounded browser fallback after an upstream challenge. Setup and verification: [docs/railway.md](docs/railway.md).
 
 ## 🔧 Code Quality
 
