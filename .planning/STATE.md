@@ -35,6 +35,7 @@
 ### Key Decisions (carried forward from PROJECT.md)
 
 - **2026-06-04:** Reverted to single-domain monolith. ROLE=shell/content split removed. Proxied HTML now served from the same origin as the UI. See `.planning/quick/20260604-revert-single-domain/` for security notes.
+- **2026-10-16:** Prepared a two-origin deployment and opt-in browser fallback. Production remains on one Railway service until the content service is provisioned and the code is deployed.
 - Playwright e2e only — no unit tests. Surface area is small enough that black-box e2e covers more risk per token. Re-evaluate if the rewriter (NAV-*) grows.
 - `redirect: 'manual'` → 403 on any 3xx upstream is a known-bad UX, kept until HARDEN-04 ships in Phase 1.
 - Hardcoded Bingbot User-Agent is a deliberate temporary state; replaced by HARDEN-06 in Phase 1.
@@ -61,6 +62,7 @@
 
 ## Session Continuity
 
+- **Last activity:** 2026-10-16 — completed quick task 261016-n24 to prepare the separate content service and browser fallback prototype. Deployment is pending.
 - **Last session:** 2026-04-30 — initialized milestone 1 (PROJECT.md, REQUIREMENTS.md, codebase mapping, this roadmap).
 - **Next action:** `/gsd-plan-phase 1` — plan the hardening phase. Dependencies surfaced in `ROADMAP.md` allow internal parallelization across the three plan clusters (SSRF/DNS, fetch bounds + redirects, abuse controls).
 - **Files of record:** `.planning/ROADMAP.md` (phase contract) · `.planning/REQUIREMENTS.md` (traceability) · `.planning/codebase/CONCERNS.md` (anchors per requirement).
@@ -71,6 +73,7 @@
 |------|------|-------------|
 | 2026-06-04 | revert-single-domain | Reverted from two-domain shell/content split to single-domain monolith |
 | 2026-06-04 | rewrite-relative-urls | Rewrite relative src/href/action/srcset to upstream origin in proxied HTML |
+| 2026-10-16 | restore-separate-content-origin-and-prot | Prepare separate content origin and a bounded browser fallback prototype |
 
 ---
 
